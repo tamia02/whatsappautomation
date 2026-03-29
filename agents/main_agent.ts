@@ -66,34 +66,36 @@ export async function runGrowthAgent(niche: string, location: string) {
             }
 
             // 5. Build Website (Premium Multi-page)
+            console.log(`🛠️ Building Site for ${lead.name}...`);
             const safeName = lead.name.replace(/[^a-zA-Z0-9]/g, "_");
             const htmlPath = buildMultiPageWebsite(safeName, content);
+            console.log(`✅ Site built for ${lead.name}`);
             sendProgress({ type: 'INFO', message: `🌍 Premium Multi-page site built for ${lead.name}`, lead: { ...lead, status: 'Built' } });
 
             // 6. Record Demo
-            console.log(`📹 Recording video...`);
+            console.log(`📹 Starting video capture for ${lead.name}...`);
             const videoPath = await recordDemoVideo(htmlPath);
+            console.log(`✅ Video captured for ${lead.name}`);
             await new Promise(r => setTimeout(r, 2000)); // Let the file settle
             sendProgress({ type: 'INFO', message: `📽️ Video recorded for ${lead.name}`, lead: { ...lead, status: 'Recorded' } });
 
             // 7. Upload (Optional, for demo link)
             let videoUrl = "";
             if (process.env.CLOUDINARY_API_KEY) {
+                console.log(`☁️ Uploading to Cloudinary...`);
                 videoUrl = await uploadVideo(videoPath);
+                console.log(`✅ Uploaded: ${videoUrl}`);
             }
 
             // 8. Outreach
             const message = `Hi ${lead.name}! I made a demo for you. I saw your website and I saw you don't have a website, so I made something like that. Check the video walkthrough here:`;
 
             if (process.env.USE_PERSONAL_WA === 'true' || true) {
-                console.log(`⏳ Waiting 5s for browser stability before outreach...`);
-                await new Promise(r => setTimeout(r, 5000));
+                console.log(`⏳ [SINGLE-WINDOW] Preparing WhatsApp for ${lead.name}...`);
+                await new Promise(r => setTimeout(r, 3000));
                 await sendWhatsAppFast(lead.phone || "0000000000", videoPath, message);
+                console.log(`✅ Message Sent to ${lead.name}`);
                 sendProgress({ type: 'SUCCESS', message: `🚀 Pitch Sent: ${lead.name}`, lead: { ...lead, status: 'Sent', videoUrl } });
-            } else {
-                sendProgress({ type: 'INFO', message: `[MOCK] Sending Pitch to ${lead.phone || "N/A"}:` });
-                sendProgress({ type: 'INFO', message: `       "${message} ${videoUrl}"` });
-                sendProgress({ type: 'SUCCESS', message: `[MOCK] Finished: ${lead.name}`, lead: { ...lead, status: 'Sent', videoUrl } });
             }
 
         } catch (e: any) {

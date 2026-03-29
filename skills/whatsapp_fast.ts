@@ -137,10 +137,10 @@ export async function sendWhatsAppFast(phone: string, videoPath: string, message
             const hasInput = await activePage.$("footer div[contenteditable='true']");
             if (hasInput) { state = 'READY'; break; }
 
-            const invalid = await activePage.evaluate(() => {
+            const invalid = await activePage.evaluate(`(() => {
                 const text = document.body.innerText;
                 return text.includes("invalid") || text.includes("shared via url");
-            });
+            })()`);
             if (invalid) { state = 'INVALID'; break; }
 
             await new Promise(r => setTimeout(r, 2000));
