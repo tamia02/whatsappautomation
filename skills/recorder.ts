@@ -10,14 +10,15 @@ export async function recordDemoVideo(url: string): Promise<string> {
     try {
         await page.goto(`file://${path.resolve(url)}`, { waitUntil: 'domcontentloaded' });
 
-        // Using STRING to bypass transpiler __name injection
-        await page.evaluate(`(async () => {
-            const delay = (ms) => new Promise(r => setTimeout(r, ms));
-            for (let i = 0; i < 500; i += 20) {
-                window.scrollTo(0, i);
-                await delay(30);
-            }
-        })()`);
+        // Broken-String pattern to bypass ALL transpiler/naming logic
+        const script = '(async () => { ' +
+            'const d = (m) => new Promise(r => setTimeout(r, m)); ' +
+            'for (let i = 0; i < 500; i += 20) { ' +
+            'window.scrollTo(0, i); await d(30); ' +
+            '} ' +
+            '})()';
+
+        await page.evaluate(script);
 
         await page.screenshot({ path: videoPath });
         return videoPath;
