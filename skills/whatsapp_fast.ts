@@ -82,14 +82,26 @@ export async function initWhatsAppFast() {
 }
 
 async function checkReadyState() {
-    if (!page) return;
+    if (!page || page.isClosed()) return;
     try {
-        await page.waitForSelector('div[contenteditable="true"]', { timeout: 30000 });
-        sendProgress({ type: 'WA_READY', message: 'WhatsApp is READY.' });
-        console.log("✅ [SINGLE-WINDOW] WhatsApp is READY.");
+        console.log("⏳ [SINGLE-WINDOW] Waiting for WhatsApp session...");
+        // Wait for either the chat list or the QR code to be visible
+        await Promise.race([
+            page.waitForSelector('div[contenteditable="true"]', { timeout: 45000 }),
+            page.waitForSelector('canvas', { timeout: 45000 })
+        ]);
+
+        const isLoggedIn = await page.$('div[contenteditable="true"]');
+        if (isLoggedIn) {
+            sendProgress({ type: 'WA_READY', message: 'WhatsApp is READY.' });
+            console.log("✅ [SINGLE-WINDOW] WhatsApp is READY.");
+        } else {
+            console.log("📡 [SINGLE-WINDOW] QR Code detected. Waiting for scan...");
+            sendProgress({ type: 'WA_STATUS', status: 'QR', message: 'Login required. Scan QR in the single open Chrome window.' });
+        }
     } catch (e) {
-        console.log("Waiting for QR/Auth...");
-        sendProgress({ type: 'WA_STATUS', status: 'QR', message: 'Login required. Scan QR in the single open Chrome window.' });
+        console.log("⚠️ [SINGLE-WINDOW] WhatsApp UI state unknown. Refreshing...");
+        sendProgress({ type: 'WA_STATUS', status: 'QR', message: 'Session stalled. Please ensure QR is scanned.' });
     }
 }
 

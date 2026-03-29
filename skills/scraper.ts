@@ -51,23 +51,32 @@ export async function scrapeGoogleMaps(query: string): Promise<Business[]> {
         if (!name || name.length < 3) continue;
 
         const { stars, reviews } = await item.evaluate((el) => {
-          const aria = el.getAttribute('aria-label');
+          const aria = el.getAttribute('aria-label') || '';
+          const inner = (el as HTMLElement).innerText || '';
+          const combined = (aria + " " + inner).toLowerCase();
+
           let s = 0;
           let r = 0;
-          if (aria && aria.includes('stars')) {
-            const sMatch = aria.match(/([\d.]+)\s*stars?/i);
-            const rMatch = aria.match(/([\d,]+)\s*reviews/i);
-            if (sMatch) s = parseFloat(sMatch[1]);
-            if (rMatch) r = parseInt(rMatch[1].replace(/\D/g, ''));
-          } else {
+
+          // Advanced Star Regex: Matches "4.9", "4.9 stars", "Rated 4.9"
+          const starMatch = combined.match(/([\d.]+)\s*stars?/i) || combined.match(/rated\s*([\d.]+)/i) || combined.match(/^([\d.]+)/);
+          if (starMatch) s = parseFloat(starMatch[1]);
+
+          // Advanced Review Regex: Matches "1,111 reviews", "(1111)", "by 1111 reviews"
+          const revMatch = combined.match(/([\d,]+)\s*reviews/i) || combined.match(/\(([\d,]+)\)/) || combined.match(/by\s*([\d,]+)/i);
+          if (revMatch) r = parseInt(revMatch[1].replace(/\D/g, ''));
+
+          // Fallback to specific class extraction if regex fails
+          if (s === 0 || r === 0) {
             const stats = el.querySelector('.AJ7rdc, .MW4etd, .fontBodyMedium span[aria-label]');
             if (stats) {
               const txt = (stats as HTMLElement).innerText || stats.getAttribute('aria-label') || '';
               const parts = txt.split('(');
-              s = parseFloat(parts[0]) || 0;
-              if (parts[1]) r = parseInt(parts[1].replace(/\D/g, '')) || 0;
+              if (s === 0) s = parseFloat(parts[0]) || 0;
+              if (r === 0 && parts[1]) r = parseInt(parts[1].replace(/\D/g, '')) || 0;
             }
           }
+
           return { stars: s, reviews: r };
         }).catch(() => ({ stars: 0, reviews: 0 }));
 

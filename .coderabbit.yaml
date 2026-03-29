@@ -1,0 +1,14 @@
+# CodeRabbit Configuration
+# For more info, see: https://docs.coderabbit.ai/
+
+language: "en-US"
+reviews:
+  profile: "chill" # Chill, professional, or strict
+  request_reviews_from_completions: true
+  auto_review:
+    enabled: true
+    ignore_title_keywords: ["WIP", "wip", "draft"]
+  summary:
+    enabled: true
+chat:
+  enabled: true
