@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.playwright_session_pro/
+.diagnostic_session/
+.wwebjs_auth/
+debug_maps_*.png
+timeout_*.png
+test_discovery.ts
+demo_*.png
+server_output*.txt
+.DS_Store
